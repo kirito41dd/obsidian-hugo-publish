@@ -20,5 +20,15 @@
 		"obsidian": "latest",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"
+	},
+	"dependencies": {
+		"@types/fs-extra": "^11.0.4",
+		"fs-extra": "^11.2.0",
+		"remark": "^15.0.1",
+		"remark-breaks": "^4.0.0",
+		"remark-parse": "^11.0.0",
+		"remark-stringify": "^11.0.0",
+		"unified": "^11.0.4",
+		"unist-util-visit": "^5.0.0"
 	}
 }
