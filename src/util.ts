@@ -1,6 +1,9 @@
 import { App, TFile } from "obsidian";
-import { ensureDir, copy, outputFile } from "fs-extra";
+import { ensureDir, copy, outputFile, emptyDir } from "fs-extra";
 import * as path from 'path';
+import { Text, Image, Root, Link } from 'mdast';
+import { visit } from 'unist-util-visit'
+
 
 // Get all blog post filted by tag
 export const get_all_blog_md = async (app: App, tag: string) => {
@@ -9,7 +12,7 @@ export const get_all_blog_md = async (app: App, tag: string) => {
     for (let i = 0; i < files.length; i++) {
         const meta = app.metadataCache.getFileCache(files[i]);
         const tags: string[] = meta?.frontmatter?.tags;
-        if (tags.contains(tag)) {
+        if (tags?.contains(tag)) {
             blogs.push(files[i])
         }
     }
@@ -23,6 +26,11 @@ export const copy_file = async (src: string, dst: string) => {
 
 export const write_md = async (file_path: string, header: string, body: string) => {
     await outputFile(file_path, "---\n" + header + "---\n" + body);
+}
+
+export const delete_files_in_dir = async (dir: string) => {
+    await ensureDir(dir);
+    await emptyDir(dir);
 }
 
 // parse md content, return yaml header and left content without header
@@ -63,4 +71,101 @@ export const get_md_yaml_hader_from_content = (content: string): [string, string
         // no hefader
         return ["", content]
     }
+}
+
+// ![[xxx.png]] -> ![xxx.png](xxx.png)
+export const transform_wiki_image = (ast: Root) => {
+    visit(ast, 'paragraph', function (node, index, parent) {
+        const new_children = [];
+        for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            if (child.type == "text") {
+                const text = child.value.slice(); // clone
+                const regex = /!\[\[(.*?)\]\]/g;
+                let match;
+                let last_index = 0;
+                let after_text = text.slice();
+                while ((match = regex.exec(text)) != null) {
+                    const link_text = match[1];
+                    const image_url = link_text;
+
+                    const before_text = text.slice(last_index, match.index);
+                    after_text = text.slice(match.index + match[0].length);
+
+                    if (before_text.length > 0) {
+                        const v: Text = { type: "text", value: before_text };
+                        new_children.push(v);
+                    }
+                    const v: Image = {
+                        type: 'image',
+                        url: encodeURI(image_url),
+                        alt: image_url,
+                        title: null
+                    };
+                    new_children.push(v);
+                    last_index = match.index + match[0].length;
+
+                }
+                if (after_text.length > 0) {
+                    const v: Text = { type: "text", value: after_text };
+                    new_children.push(v);
+                }
+            } else {
+                new_children.push(child);
+            }
+        }
+        node.children = new_children;
+        console.log("ast text:", node, index, parent);
+    })
+}
+
+
+// [[xxx.png]] -> [xxx.png](xxx.png)
+export const transform_wiki_link = (ast: Root) => {
+    visit(ast, 'paragraph', function (node, index, parent) {
+        const new_children = [];
+        for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            if (child.type == "text") {
+                const text = child.value.slice(); // clone
+                const regex = /\[\[(.*?)\]\]/g;
+                let match;
+                let last_index = 0;
+                let after_text = text.slice();
+                while ((match = regex.exec(text)) != null) {
+                    const link_text = match[1];
+                    const image_url = link_text;
+
+                    const before_text = text.slice(last_index, match.index);
+                    after_text = text.slice(match.index + match[0].length);
+
+                    if (before_text.length > 0) {
+                        const v: Text = { type: "text", value: before_text };
+                        new_children.push(v);
+                    }
+                    const link_txt: Text = {
+                        type: "text",
+                        value: image_url
+                    };
+                    const v: Link = {
+                        type: 'link',
+                        url: encodeURI(image_url),
+                        title: null,
+                        children: [link_txt]
+                    };
+                    new_children.push(v);
+                    last_index = match.index + match[0].length;
+
+                }
+                if (after_text.length > 0) {
+                    const v: Text = { type: "text", value: after_text };
+                    new_children.push(v);
+                }
+            } else {
+                new_children.push(child);
+            }
+        }
+        node.children = new_children;
+        console.log("ast text:", node, index, parent);
+    })
 }

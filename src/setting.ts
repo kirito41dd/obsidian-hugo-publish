@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import MyPlugin from "./main";
+import * as path from 'path';
 
 
 export interface MyPluginSettings {
@@ -7,13 +8,21 @@ export interface MyPluginSettings {
     site_dir: string; // absolute path
     blog_dir: string; // relative path to site_dir
     static_dir: string; // relative path to site_dir/static
+    get_blog_abs_dir: () => string;
+    get_static_abs_dir: () => string;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
     blog_tag: "blog",
     blog_dir: "",
     static_dir: "ob",
-    site_dir: ""
+    site_dir: "",
+    get_blog_abs_dir(): string {
+        return path.join(this.site_dir, this.blog_dir);
+    },
+    get_static_abs_dir(): string {
+        return path.join(this.site_dir, "static", this.static_dir);
+    }
 }
 
 export class SampleSettingTab extends PluginSettingTab {
