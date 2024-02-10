@@ -5,8 +5,17 @@ import { DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab, check_setting } f
 import * as util from "./util";
 import * as path from 'path';
 import { visit } from 'unist-util-visit'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { remark } from 'remark';
 import { newlineToBreak } from 'mdast-util-newline-to-break'
+
+import { math } from 'micromark-extension-math'
+import { fromMarkdown } from 'mdast-util-from-markdown'
+import { mathFromMarkdown, mathToMarkdown } from 'mdast-util-math'
+import { toMarkdown } from 'mdast-util-to-markdown'
+import { gfmTable } from 'micromark-extension-gfm-table'
+import { gfmTableFromMarkdown, gfmTableToMarkdown } from 'mdast-util-gfm-table'
+
 
 // Remember to rename these classes and interfaces!
 
@@ -145,8 +154,12 @@ export default class MyPlugin extends Plugin {
 			console.log("header\n", header, "body\n", body, "hv", hv);
 
 			// const ast = unified().use(remarkParse).parse(body);
-			const ast = remark.parse(body)
+			// const ast = remark.parse(body)
 
+			const ast = fromMarkdown(body, {
+				extensions: [math(), gfmTable()],
+				mdastExtensions: [mathFromMarkdown(), gfmTableFromMarkdown()]
+			})
 
 			// hard line brek
 			newlineToBreak(ast);
@@ -210,7 +223,8 @@ export default class MyPlugin extends Plugin {
 					}
 				})
 
-				body = remark.stringify(ast);
+				// body = remark.stringify(ast);
+				body = toMarkdown(ast, { extensions: [mathToMarkdown(), gfmTableToMarkdown()] });
 				console.log(`write ${src} to ${dst}`);
 				await util.write_md(dst, header, body)
 			}

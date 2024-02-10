@@ -1,7 +1,7 @@
 import { App, TFile } from "obsidian";
 import { ensureDir, copy, outputFile, emptyDir } from "fs-extra";
 import * as path from 'path';
-import { Text, Image, Root, Link } from 'mdast';
+import { Text, Image, Root, Link, Parent } from 'mdast';
 import { visit } from 'unist-util-visit'
 
 
@@ -76,46 +76,10 @@ export const get_md_yaml_hader_from_content = (content: string): [string, string
 // ![[xxx.png]] -> ![xxx.png](xxx.png)
 export const transform_wiki_image = (ast: Root) => {
     visit(ast, 'paragraph', function (node, index, parent) {
-        const new_children = [];
-        for (let i = 0; i < node.children.length; i++) {
-            const child = node.children[i];
-            if (child.type == "text") {
-                const text = child.value.slice(); // clone
-                const regex = /!\[\[(.*?)\]\]/g;
-                let match;
-                let last_index = 0;
-                let after_text = text.slice();
-                while ((match = regex.exec(text)) != null) {
-                    const link_text = match[1];
-                    const image_url = link_text;
-
-                    const before_text = text.slice(last_index, match.index);
-                    after_text = text.slice(match.index + match[0].length);
-
-                    if (before_text.length > 0) {
-                        const v: Text = { type: "text", value: before_text };
-                        new_children.push(v);
-                    }
-                    const v: Image = {
-                        type: 'image',
-                        url: encodeURI(image_url),
-                        alt: image_url,
-                        title: null
-                    };
-                    new_children.push(v);
-                    last_index = match.index + match[0].length;
-
-                }
-                if (after_text.length > 0) {
-                    const v: Text = { type: "text", value: after_text };
-                    new_children.push(v);
-                }
-            } else {
-                new_children.push(child);
-            }
-        }
-        node.children = new_children;
-        console.log("ast text:", node, index, parent);
+        transform_wiki_image_on_parent(node);
+    })
+    visit(ast, "tableCell", function (node, index, parent) {
+        transform_wiki_image_on_parent(node);
     })
 }
 
@@ -123,49 +87,97 @@ export const transform_wiki_image = (ast: Root) => {
 // [[xxx.png]] -> [xxx.png](xxx.png)
 export const transform_wiki_link = (ast: Root) => {
     visit(ast, 'paragraph', function (node, index, parent) {
-        const new_children = [];
-        for (let i = 0; i < node.children.length; i++) {
-            const child = node.children[i];
-            if (child.type == "text") {
-                const text = child.value.slice(); // clone
-                const regex = /\[\[(.*?)\]\]/g;
-                let match;
-                let last_index = 0;
-                let after_text = text.slice();
-                while ((match = regex.exec(text)) != null) {
-                    const link_text = match[1];
-                    const image_url = link_text;
-
-                    const before_text = text.slice(last_index, match.index);
-                    after_text = text.slice(match.index + match[0].length);
-
-                    if (before_text.length > 0) {
-                        const v: Text = { type: "text", value: before_text };
-                        new_children.push(v);
-                    }
-                    const link_txt: Text = {
-                        type: "text",
-                        value: image_url
-                    };
-                    const v: Link = {
-                        type: 'link',
-                        url: encodeURI(image_url),
-                        title: null,
-                        children: [link_txt]
-                    };
-                    new_children.push(v);
-                    last_index = match.index + match[0].length;
-
-                }
-                if (after_text.length > 0) {
-                    const v: Text = { type: "text", value: after_text };
-                    new_children.push(v);
-                }
-            } else {
-                new_children.push(child);
-            }
-        }
-        node.children = new_children;
-        console.log("ast text:", node, index, parent);
+        transform_wiki_link_on_parent(node);
     })
+    visit(ast, 'tableCell', function (node, index, parent) {
+        transform_wiki_link_on_parent(node);
+    })
+}
+
+const transform_wiki_image_on_parent = (node: Parent) => {
+    const new_children = [];
+    for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+        if (child.type == "text") {
+            const text = child.value.slice(); // clone
+            const regex = /!\[\[(.*?)\]\]/g;
+            let match;
+            let last_index = 0;
+            let after_text = text.slice();
+            while ((match = regex.exec(text)) != null) {
+                const link_text = match[1];
+                const image_url = link_text;
+
+                const before_text = text.slice(last_index, match.index);
+                after_text = text.slice(match.index + match[0].length);
+
+                if (before_text.length > 0) {
+                    const v: Text = { type: "text", value: before_text };
+                    new_children.push(v);
+                }
+                const v: Image = {
+                    type: 'image',
+                    url: encodeURI(image_url),
+                    alt: image_url,
+                    title: null
+                };
+                new_children.push(v);
+                last_index = match.index + match[0].length;
+
+            }
+            if (after_text.length > 0) {
+                const v: Text = { type: "text", value: after_text };
+                new_children.push(v);
+            }
+        } else {
+            new_children.push(child);
+        }
+    }
+    node.children = new_children;
+}
+
+const transform_wiki_link_on_parent = (node: Parent) => {
+    const new_children = [];
+    for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+        if (child.type == "text") {
+            const text = child.value.slice(); // clone
+            const regex = /\[\[(.*?)\]\]/g;
+            let match;
+            let last_index = 0;
+            let after_text = text.slice();
+            while ((match = regex.exec(text)) != null) {
+                const link_text = match[1];
+                const image_url = link_text;
+
+                const before_text = text.slice(last_index, match.index);
+                after_text = text.slice(match.index + match[0].length);
+
+                if (before_text.length > 0) {
+                    const v: Text = { type: "text", value: before_text };
+                    new_children.push(v);
+                }
+                const link_txt: Text = {
+                    type: "text",
+                    value: image_url
+                };
+                const v: Link = {
+                    type: 'link',
+                    url: encodeURI(image_url),
+                    title: null,
+                    children: [link_txt]
+                };
+                new_children.push(v);
+                last_index = match.index + match[0].length;
+
+            }
+            if (after_text.length > 0) {
+                const v: Text = { type: "text", value: after_text };
+                new_children.push(v);
+            }
+        } else {
+            new_children.push(child);
+        }
+    }
+    node.children = new_children;
 }

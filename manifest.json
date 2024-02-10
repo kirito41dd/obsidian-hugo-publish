@@ -1,7 +1,7 @@
 {
 	"id": "hugo-publish",
 	"name": "Hugo Publish",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "write blog in obsidian, pubulish to hugo site.",
 	"author": "kirito",
