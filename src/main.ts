@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { App, Editor, FileSystemAdapter, MarkdownView, Modal, Notice, Plugin, parseYaml, stringifyYaml } from 'obsidian';
-import { DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab, check_setting } from './setting';
+import { DEFAULT_SETTINGS, HugoPublishSettings, HugoPublishSettingTab, check_setting } from './setting';
 
 import * as util from "./util";
 import * as path from 'path';
@@ -21,8 +21,8 @@ import { gfmTableFromMarkdown, gfmTableToMarkdown } from 'mdast-util-gfm-table'
 
 
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class HugoPublishPlugin extends Plugin {
+	settings: HugoPublishSettings;
 	base_path: string;
 
 	async onload() {
@@ -40,11 +40,11 @@ export default class MyPlugin extends Plugin {
 
 
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'hugo sync', async (evt: MouseEvent) => {
+		this.addRibbonIcon('dice', 'hugo sync', async (evt: MouseEvent) => {
 			await this.sync_blog();
 		});
 		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		// ribbonIconEl.addClass('my-plugin-ribbon-class');
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		// const statusBarItemEl = this.addStatusBarItem();
@@ -89,7 +89,7 @@ export default class MyPlugin extends Plugin {
 		// });
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new HugoPublishSettingTab(this.app, this));
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
@@ -242,7 +242,7 @@ export default class MyPlugin extends Plugin {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-class SampleModal extends Modal {
+class HugoPublishModal extends Modal {
 	constructor(app: App) {
 		super(app);
 	}

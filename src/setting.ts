@@ -1,9 +1,9 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import MyPlugin from "./main";
+import HugoPublishPlugin from "./main";
 import * as path from 'path';
 
 
-export interface MyPluginSettings {
+export interface HugoPublishSettings {
     blog_tag: string;
     site_dir: string; // absolute path
     blog_dir: string; // relative path to site_dir
@@ -12,7 +12,7 @@ export interface MyPluginSettings {
     get_static_abs_dir: () => string;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: HugoPublishSettings = {
     blog_tag: "blog",
     blog_dir: "",
     static_dir: "ob",
@@ -25,10 +25,10 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
     }
 }
 
-export class SampleSettingTab extends PluginSettingTab {
-    plugin: MyPlugin;
+export class HugoPublishSettingTab extends PluginSettingTab {
+    plugin: HugoPublishPlugin;
 
-    constructor(app: App, plugin: MyPlugin) {
+    constructor(app: App, plugin: HugoPublishPlugin) {
         super(app, plugin);
         this.plugin = plugin;
     }
@@ -66,7 +66,7 @@ export class SampleSettingTab extends PluginSettingTab {
     }
 }
 
-export const check_setting = (setting: MyPluginSettings): boolean => {
+export const check_setting = (setting: HugoPublishSettings): boolean => {
     if (setting.blog_dir.length == 0 || setting.static_dir.length == 0 || setting.blog_tag.length == 0) {
         return false
     }
