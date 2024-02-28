@@ -40,7 +40,7 @@ export default class HugoPublishPlugin extends Plugin {
 
 
 		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'hugo sync', async (evt: MouseEvent) => {
+		this.addRibbonIcon('folder-sync', 'hugo sync', async (evt: MouseEvent) => {
 			await this.sync_blog();
 		});
 		// Perform additional things with the ribbon
@@ -120,7 +120,7 @@ export default class HugoPublishPlugin extends Plugin {
 
 		const blogs = await util.get_all_blog_md(this.app, this.settings.blog_tag);
 
-		console.log("link", this.app.metadataCache.resolvedLinks);
+		//console.log("link", this.app.metadataCache.resolvedLinks);
 
 		for (let i = 0; i < blogs.length; i++) {
 			const f = blogs[i];
@@ -138,7 +138,7 @@ export default class HugoPublishPlugin extends Plugin {
 				if (stat) {
 					const creat_at = new Date(stat?.ctime).toISOString();
 					const modify_at = new Date(stat?.mtime).toISOString()
-					console.log("process", f.path, "stat", stat, creat_at);
+					//console.log("process", f.path, "stat", stat, creat_at);
 					if (!("date" in hv)) {
 						hv["date"] = creat_at;
 					}
@@ -151,7 +151,7 @@ export default class HugoPublishPlugin extends Plugin {
 			header = stringifyYaml(hv);
 
 
-			console.log("header\n", header, "body\n", body, "hv", hv);
+			//console.log("header\n", header, "body\n", body, "hv", hv);
 
 			// const ast = unified().use(remarkParse).parse(body);
 			// const ast = remark.parse(body)
@@ -165,7 +165,7 @@ export default class HugoPublishPlugin extends Plugin {
 			newlineToBreak(ast);
 
 
-			console.log("ast", ast)
+			//console.log("ast", ast)
 			util.transform_wiki_image(ast);
 			util.transform_wiki_link(ast);
 
@@ -188,7 +188,7 @@ export default class HugoPublishPlugin extends Plugin {
 							link2path.set(v.link, embed_f.path);
 							const src = path.join(this.base_path, embed_f.path);
 							const dst = path.join(this.settings.get_static_abs_dir(), embed_f.path);
-							console.log(`copy ${src} to ${dst}`);
+							//console.log(`copy ${src} to ${dst}`);
 							await util.copy_file(src, dst);
 						}
 					}
@@ -206,8 +206,8 @@ export default class HugoPublishPlugin extends Plugin {
 				// }
 				const static_dir = this.settings.static_dir;
 
-				console.log("this", this);
-				console.log("link2path", link2path, "meta", meta)
+				//console.log("this", this);
+				//console.log("link2path", link2path, "meta", meta)
 				visit(ast, 'image', function (node, index, parent) {
 					const decoded_url = decodeURI(node.url);
 					const v = link2path.get(decoded_url)
@@ -225,7 +225,7 @@ export default class HugoPublishPlugin extends Plugin {
 
 				// body = remark.stringify(ast);
 				body = toMarkdown(ast, { extensions: [mathToMarkdown(), gfmTableToMarkdown()] });
-				console.log(`write ${src} to ${dst}`);
+				//console.log(`write ${src} to ${dst}`);
 				await util.write_md(dst, header, body)
 			}
 		}
