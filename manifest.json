@@ -3,7 +3,7 @@
 	"name": "Hugo Publish",
 	"version": "1.0.3",
 	"minAppVersion": "0.15.0",
-	"description": "write blog in obsidian, pubulish to hugo site.",
+	"description": "Publish your blog to hugo site.",
 	"author": "kirito",
 	"authorUrl": "https://www.kirito.info",
 	"isDesktopOnly": true
