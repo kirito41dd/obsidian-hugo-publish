@@ -172,7 +172,8 @@ export default class HugoPublishPlugin extends Plugin {
 
 			const meta = this.app.metadataCache.getFileCache(f);
 
-			const link2path: Map<string, string> = new Map();
+			// link -> path,is_md
+			const link2path: Map<string, [string, boolean]> = new Map();
 
 			const abf = this.app.vault.getAbstractFileByPath(f.path);
 			// copy files to blog dir
@@ -185,7 +186,7 @@ export default class HugoPublishPlugin extends Plugin {
 					for (const v of meta.embeds) {
 						const embed_f = this.app.metadataCache.getFirstLinkpathDest(v.link, f.path);
 						if (embed_f) {
-							link2path.set(v.link, embed_f.path);
+							link2path.set(v.link, [embed_f.path, false]);
 							const src = path.join(this.base_path, embed_f.path);
 							const dst = path.join(this.settings.get_static_abs_dir(), embed_f.path);
 							//console.log(`copy ${src} to ${dst}`);
@@ -194,16 +195,19 @@ export default class HugoPublishPlugin extends Plugin {
 					}
 
 				}
-				// if (meta?.links) {
-				// 	for (const v of meta.links) {
-				// 		const link_f = this.app.metadataCache.getFirstLinkpathDest(v.link, f.path);
-				// 		console.log("link", v.link, link_f);
-				// 		if (link_f) {
-				// 			link2path.set(v.link, link_f.path);
-				// 			const src = 
-				// 		}
-				// 	}
-				// }
+				if (meta?.links) {
+					for (const v of meta.links) {
+						const link_f = this.app.metadataCache.getFirstLinkpathDest(v.link, f.path);
+						//console.log("link", v.link, link_f);
+						if (link_f) {
+							let is_md = false;
+							if (link_f.path.endsWith(".md")) {
+								is_md = true;
+								link2path.set(v.link, [v.link, is_md]);
+							}
+						}
+					}
+				}
 				const static_dir = this.settings.static_dir;
 
 				//console.log("this", this);
@@ -212,14 +216,22 @@ export default class HugoPublishPlugin extends Plugin {
 					const decoded_url = decodeURI(node.url);
 					const v = link2path.get(decoded_url)
 					if (v) {
-						node.url = encodeURI(path.join("/", static_dir, v).replace(/\\/g, '/'));
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const [vv, _is_md] = v;
+						node.url = encodeURI(path.join("/", static_dir, vv).replace(/\\/g, '/'));
 					}
 				})
 				visit(ast, 'link', function (node, index, parent) {
 					const decoded_url = decodeURI(node.url);
 					const v = link2path.get(decoded_url)
 					if (v) {
-						node.url = encodeURI(path.join("/", static_dir, v).replace(/\\/g, '/'));
+						const [vv, is_md] = v;
+						if (is_md) {
+							// inner md link:  [[abc]] -> [](/abc) -> https://www.blog.com/abc
+							node.url = encodeURI(path.join("/", vv).replace(/\\/g, '/'));
+						} else {
+							node.url = encodeURI(path.join("/", static_dir, vv).replace(/\\/g, '/'));
+						}
 					}
 				})
 
