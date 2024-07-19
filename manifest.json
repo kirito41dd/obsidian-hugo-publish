@@ -1,7 +1,7 @@
 {
 	"id": "hugo-publish",
 	"name": "Hugo Publish",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"minAppVersion": "0.15.0",
 	"description": "Publish your blog to hugo site.",
 	"author": "kirito",

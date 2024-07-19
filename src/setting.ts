@@ -8,8 +8,10 @@ export interface HugoPublishSettings {
     site_dir: string; // absolute path
     blog_dir: string; // relative path to site_dir
     static_dir: string; // relative path to site_dir/static
+    keep_list: string;
     get_blog_abs_dir: () => string;
     get_static_abs_dir: () => string;
+    get_blog_keep_list: () => RegExp[];
 }
 
 export const DEFAULT_SETTINGS: HugoPublishSettings = {
@@ -17,11 +19,22 @@ export const DEFAULT_SETTINGS: HugoPublishSettings = {
     blog_dir: "",
     static_dir: "ob",
     site_dir: "",
+    keep_list: "",
     get_blog_abs_dir(): string {
         return path.join(this.site_dir, this.blog_dir);
     },
     get_static_abs_dir(): string {
         return path.join(this.site_dir, "static", this.static_dir);
+    },
+    get_blog_keep_list(): RegExp[] {
+        const strs: string[] = this.keep_list.split(",");
+        const regs = Array(0);
+        for (const s of strs) {
+            if (s.length > 0) {
+                regs.push(RegExp(s));
+            }
+        }
+        return regs;
     }
 }
 
@@ -40,7 +53,7 @@ export class HugoPublishSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('blog tag')
-            .setDesc('All articles with this tag are treated as blogs')
+            .setDesc('All articles with this tag are treated as blogs, if empty process all articles')
             .addText(text => text
                 .setPlaceholder('Enter your secret')
                 .setValue(this.plugin.settings.blog_tag)
@@ -63,11 +76,16 @@ export class HugoPublishSettingTab extends PluginSettingTab {
                 this.plugin.settings.static_dir = value;
                 await this.plugin.saveSettings();
             }));
+        new Setting(containerEl).setName("blog dir keep list").setDesc('Optional, do not delete matching files, use js regexp and split by ",". e.g. .*\\.html,.*\\.toml')
+            .addText(text => text.setValue(this.plugin.settings.keep_list).onChange(async (value) => {
+                this.plugin.settings.keep_list = value;
+                await this.plugin.saveSettings();
+            }));
     }
 }
 
 export const check_setting = (setting: HugoPublishSettings): boolean => {
-    if (setting.blog_dir.length == 0 || setting.static_dir.length == 0 || setting.blog_tag.length == 0) {
+    if (setting.blog_dir.length == 0 || setting.static_dir.length == 0) {
         return false
     }
     return true;

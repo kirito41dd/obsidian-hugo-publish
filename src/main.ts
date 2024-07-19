@@ -115,7 +115,7 @@ export default class HugoPublishPlugin extends Plugin {
 		new Notice('Start syncing blogs...');
 
 		// clear dir
-		await util.delete_files_in_dir(this.settings.get_blog_abs_dir());
+		await util.delete_files_in_dir_with_keep_list(this.settings.get_blog_abs_dir(), this.settings.get_blog_keep_list());
 		await util.delete_files_in_dir(this.settings.get_static_abs_dir());
 
 		const blogs = await util.get_all_blog_md(this.app, this.settings.blog_tag);
@@ -130,7 +130,8 @@ export default class HugoPublishPlugin extends Plugin {
 
 
 			let [header, body] = util.get_md_yaml_hader_from_content(content)
-			const hv = parseYaml(header);
+			let hv = parseYaml(header);
+			if (!hv) { hv = {}; }
 			if (hv) {
 				if (!("title" in hv)) {
 					hv["title"] = path.parse(f.name).name;
@@ -178,7 +179,7 @@ export default class HugoPublishPlugin extends Plugin {
 			const abf = this.app.vault.getAbstractFileByPath(f.path);
 			// copy files to blog dir
 			if (abf) {
-				const src = path.join(this.base_path, abf.path);
+				//const src = path.join(this.base_path, abf.path);
 				const dst = path.join(this.settings.get_blog_abs_dir(), f.path);
 
 				if (meta?.embeds) {

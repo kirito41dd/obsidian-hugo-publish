@@ -1,5 +1,5 @@
 import { App, TFile } from "obsidian";
-import { ensureDir, copy, outputFile, emptyDir } from "fs-extra";
+import { ensureDir, copy, outputFile, emptyDir, readdir, stat, rmdir, remove } from "fs-extra";
 import * as path from 'path';
 import { Text, Image, Root, Link, Parent } from 'mdast';
 import { visit } from 'unist-util-visit'
@@ -12,7 +12,7 @@ export const get_all_blog_md = async (app: App, tag: string) => {
     for (let i = 0; i < files.length; i++) {
         const meta = app.metadataCache.getFileCache(files[i]);
         const tags: string[] = meta?.frontmatter?.tags;
-        if (tags?.contains(tag)) {
+        if (tag.length == 0 || tags?.contains(tag)) {
             blogs.push(files[i])
         }
     }
@@ -31,6 +31,33 @@ export const write_md = async (file_path: string, header: string, body: string) 
 export const delete_files_in_dir = async (dir: string) => {
     await ensureDir(dir);
     await emptyDir(dir);
+}
+
+export const delete_files_in_dir_with_keep_list = async (dir: string, keep_list: RegExp[]) => {
+    await ensureDir(dir);
+    const files = await readdir(dir);
+    for (const file of files) {
+        const file_path = `${dir}/${file}`;
+        const file_stat = await stat(file_path);
+        if (file_stat.isDirectory()) {
+            await delete_files_in_dir_with_keep_list(file_path, keep_list);
+            const sub_files = await readdir(file_path);
+            if (sub_files.length === 0) {
+                await rmdir(file_path);
+            }
+        } else {
+            let match = false;
+            for (const reg of keep_list) {
+                if (reg.test(file)) {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) {
+                await remove(file_path);
+            }
+        }
+    }
 }
 
 // parse md content, return yaml header and left content without header
