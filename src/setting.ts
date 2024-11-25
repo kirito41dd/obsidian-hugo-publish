@@ -5,6 +5,7 @@ import * as path from 'path';
 
 export interface HugoPublishSettings {
     blog_tag: string;
+    export_blog_tag: boolean;
     site_dir: string; // absolute path
     blog_dir: string; // relative path to site_dir
     static_dir: string; // relative path to site_dir/static
@@ -35,7 +36,8 @@ export const DEFAULT_SETTINGS: HugoPublishSettings = {
             }
         }
         return regs;
-    }
+    },
+    export_blog_tag: true
 }
 
 export class HugoPublishSettingTab extends PluginSettingTab {
@@ -61,18 +63,23 @@ export class HugoPublishSettingTab extends PluginSettingTab {
                     this.plugin.settings.blog_tag = value;
                     await this.plugin.saveSettings();
                 }));
+        new Setting(containerEl).setName("export blog tag").setDesc("Export ${blog tag} to hugo md file's header")
+            .addToggle(toggle => toggle.setValue(this.plugin.settings.export_blog_tag).onChange(async (value) => {
+                this.plugin.settings.export_blog_tag = value;
+                await this.plugin.saveSettings();
+            }));
         new Setting(containerEl).setName("site dir").setDesc("Hugo site root dir, absolute path")
             .addText(text => text.setPlaceholder("/path/to/hugo/site").setValue(this.plugin.settings.site_dir).onChange(async (value) => {
                 this.plugin.settings.site_dir = value;
                 await this.plugin.saveSettings();
             }));
-        new Setting(containerEl).setName("blog dir").setDesc("All blog copy to this dir, relative path to site")
+        new Setting(containerEl).setName("blog dir").setDesc("All blog copy to this dir, relative path to site, note that content will be deleted first when syncing")
             .addText(text => text.setPlaceholder("blog/dir").setValue(this.plugin.settings.blog_dir).onChange(async (value) => {
                 this.plugin.settings.blog_dir = value;
                 await this.plugin.saveSettings();
             }));
-        new Setting(containerEl).setName("static dir").setDesc("All static(like image) copy to static/${static dir}, like static/ob, relative path to site/static")
-            .addText(text => text.setPlaceholder("static/dir").setValue(this.plugin.settings.static_dir).onChange(async (value) => {
+        new Setting(containerEl).setName("static dir").setDesc("All static(like images) copy to static/${static dir}, like static/ob, relative path to site/static. Can be empty, note that content will be deleted first when syncing")
+            .addText(text => text.setPlaceholder("./").setValue(this.plugin.settings.static_dir).onChange(async (value) => {
                 this.plugin.settings.static_dir = value;
                 await this.plugin.saveSettings();
             }));
@@ -85,7 +92,7 @@ export class HugoPublishSettingTab extends PluginSettingTab {
 }
 
 export const check_setting = (setting: HugoPublishSettings): boolean => {
-    if (setting.blog_dir.length == 0 || setting.static_dir.length == 0) {
+    if (setting.blog_dir.length == 0 || setting.site_dir.length == 0) {
         return false
     }
     return true;
