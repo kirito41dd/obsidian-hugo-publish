@@ -8,6 +8,7 @@ export interface HugoPublishSettings {
     export_blog_tag: boolean;
     site_dir: string; // absolute path
     blog_dir: string; // relative path to site_dir
+    exclude_dir: string; // relative path to site_dir
     static_dir: string; // relative path to site_dir/static
     keep_list: string;
     get_blog_abs_dir: () => string;
@@ -18,6 +19,7 @@ export interface HugoPublishSettings {
 export const DEFAULT_SETTINGS: HugoPublishSettings = {
     blog_tag: "blog",
     blog_dir: "",
+    exclude_dir: "",
     static_dir: "ob",
     site_dir: "",
     keep_list: "",
@@ -78,6 +80,11 @@ export class HugoPublishSettingTab extends PluginSettingTab {
                 this.plugin.settings.blog_dir = value;
                 await this.plugin.saveSettings();
             }));
+        new Setting(containerEl).setName("exclude dir").setDesc('Exclude dir when syncing, relative path to vault, split by ",", like blog/dir1')
+            .addText(text => text.setPlaceholder("blog/dir1").setValue(this.plugin.settings.exclude_dir).onChange(async (value) => {
+                this.plugin.settings.exclude_dir = value;
+                await this.plugin.saveSettings();
+            }))
         new Setting(containerEl).setName("static dir").setDesc("All static(like images) copy to static/${static dir}, like static/ob, relative path to site/static. Can be empty, note that content will be deleted first when syncing")
             .addText(text => text.setPlaceholder("./").setValue(this.plugin.settings.static_dir).onChange(async (value) => {
                 this.plugin.settings.static_dir = value;
