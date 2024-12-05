@@ -121,7 +121,7 @@ export default class HugoPublishPlugin extends Plugin {
 		const blogs = await util.get_all_blog_md(this.app, this.settings.blog_tag);
 
 		// Get excluded directories
-		const excludeDirs = this.settings.exclude_dir.split(',');
+		const excludeDirs = this.settings.get_exclude_dir();
 
 		for (let i = 0; i < blogs.length; i++) {
 			const f = blogs[i];
@@ -132,6 +132,11 @@ export default class HugoPublishPlugin extends Plugin {
 			const isExcluded = excludeDirs.some(dir => f.path.startsWith(dir));
 			if (isExcluded) {
 				continue; // Ignore files in excluded directories
+			}
+
+			// Check if the file is in the vault_dir directory
+			if (this.settings.vault_dir && !f.path.startsWith(this.settings.vault_dir)) {
+				continue; // Ignore files not in the vault_dir directory
 			}
 
 			let [header, body] = util.get_md_yaml_hader_from_content(content)
@@ -185,7 +190,7 @@ export default class HugoPublishPlugin extends Plugin {
 			// copy files to blog dir
 			if (abf) {
 				//const src = path.join(this.base_path, abf.path);
-				const dst = path.join(this.settings.get_blog_abs_dir(), f.path);
+				const dst = path.join(this.settings.get_blog_abs_dir(), f.path.replace(this.settings.vault_dir, ''));
 
 				if (meta?.embeds) {
 					// copy embeds to static dir
