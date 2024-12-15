@@ -134,11 +134,6 @@ export default class HugoPublishPlugin extends Plugin {
 				continue; // Ignore files in excluded directories
 			}
 
-			// Check if the file is in the vault_dir directory
-			if (this.settings.vault_dir && !f.path.startsWith(this.settings.vault_dir)) {
-				continue; // Ignore files not in the vault_dir directory
-			}
-
 			let [header, body] = util.get_md_yaml_hader_from_content(content)
 			let hv = parseYaml(header);
 			if (!hv) { hv = {}; }
@@ -190,7 +185,7 @@ export default class HugoPublishPlugin extends Plugin {
 			// copy files to blog dir
 			if (abf) {
 				//const src = path.join(this.base_path, abf.path);
-				const dst = path.join(this.settings.get_blog_abs_dir(), f.path.replace(this.settings.vault_dir, ''));
+				const dst = path.join(this.settings.get_blog_abs_dir(), f.path);
 
 				if (meta?.embeds) {
 					// copy embeds to static dir
