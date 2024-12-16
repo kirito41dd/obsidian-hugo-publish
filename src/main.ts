@@ -120,14 +120,19 @@ export default class HugoPublishPlugin extends Plugin {
 
 		const blogs = await util.get_all_blog_md(this.app, this.settings.blog_tag);
 
-		//console.log("link", this.app.metadataCache.resolvedLinks);
+		// Get excluded directories
+		const excludeDirs = this.settings.get_exclude_dir();
 
 		for (let i = 0; i < blogs.length; i++) {
 			const f = blogs[i];
 			const content = await this.app.vault.read(f);
 			const stat = await this.app.vault.adapter.stat(f.path);
 
-
+			// Check if the file is in an excluded directory
+			const isExcluded = excludeDirs.some(dir => f.path.startsWith(dir));
+			if (isExcluded) {
+				continue; // Ignore files in excluded directories
+			}
 
 			let [header, body] = util.get_md_yaml_hader_from_content(content)
 			let hv = parseYaml(header);

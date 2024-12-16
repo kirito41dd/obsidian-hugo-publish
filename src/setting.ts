@@ -6,10 +6,12 @@ import * as path from 'path';
 export interface HugoPublishSettings {
     blog_tag: string;
     export_blog_tag: boolean;
+    exclude_dir: string; // relative path to vault_dir
     site_dir: string; // absolute path
     blog_dir: string; // relative path to site_dir
     static_dir: string; // relative path to site_dir/static
     keep_list: string;
+    get_exclude_dir: () => string[];
     get_blog_abs_dir: () => string;
     get_static_abs_dir: () => string;
     get_blog_keep_list: () => RegExp[];
@@ -17,10 +19,17 @@ export interface HugoPublishSettings {
 
 export const DEFAULT_SETTINGS: HugoPublishSettings = {
     blog_tag: "blog",
+    exclude_dir: "",
     blog_dir: "",
     static_dir: "ob",
     site_dir: "",
     keep_list: "",
+    get_exclude_dir(): string[] {
+        if (this.exclude_dir === "") {
+            return [];
+        }
+        return this.exclude_dir.split(',');
+    },
     get_blog_abs_dir(): string {
         return path.join(this.site_dir, this.blog_dir);
     },
@@ -68,6 +77,11 @@ export class HugoPublishSettingTab extends PluginSettingTab {
                 this.plugin.settings.export_blog_tag = value;
                 await this.plugin.saveSettings();
             }));
+        new Setting(containerEl).setName("exclude dir").setDesc('Exclude dir when syncing, relative path to vault, split by ",", like blog/dir1')
+            .addText(text => text.setPlaceholder("blog/dir1").setValue(this.plugin.settings.exclude_dir).onChange(async (value) => {
+                this.plugin.settings.exclude_dir = value;
+                await this.plugin.saveSettings();
+            }))
         new Setting(containerEl).setName("site dir").setDesc("Hugo site root dir, absolute path")
             .addText(text => text.setPlaceholder("/path/to/hugo/site").setValue(this.plugin.settings.site_dir).onChange(async (value) => {
                 this.plugin.settings.site_dir = value;
