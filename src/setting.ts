@@ -77,8 +77,8 @@ export class HugoPublishSettingTab extends PluginSettingTab {
                 this.plugin.settings.export_blog_tag = value;
                 await this.plugin.saveSettings();
             }));
-        new Setting(containerEl).setName("exclude dir").setDesc('Exclude dir when syncing, relative path to vault, split by ",", like blog/dir1')
-            .addText(text => text.setPlaceholder("blog/dir1").setValue(this.plugin.settings.exclude_dir).onChange(async (value) => {
+        new Setting(containerEl).setName("exclude dir").setDesc('Exclude dir when syncing, relative path to vault, split by ","')
+            .addText(text => text.setPlaceholder("templates,dir2,tmp/dir3").setValue(this.plugin.settings.exclude_dir).onChange(async (value) => {
                 this.plugin.settings.exclude_dir = value;
                 await this.plugin.saveSettings();
             }))
