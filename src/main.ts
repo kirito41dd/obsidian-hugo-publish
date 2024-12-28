@@ -175,6 +175,7 @@ export default class HugoPublishPlugin extends Plugin {
 			//console.log("ast", ast)
 			util.transform_wiki_image(ast);
 			util.transform_wiki_link(ast);
+			util.transform_better_latex(ast);
 
 
 			const meta = this.app.metadataCache.getFileCache(f);

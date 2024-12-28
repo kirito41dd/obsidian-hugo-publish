@@ -100,6 +100,16 @@ export const get_md_yaml_hader_from_content = (content: string): [string, string
     }
 }
 
+export const transform_better_latex = (ast: Root) => {
+    visit(ast, 'math', function (node, index, parent) {
+        // https://www.gohugo.org/doc/tutorials/mathjax_en/
+        // just put LaTeX code in between <div>$$TeX Code$$</div>
+        const new_value = '<div>\n$$\n' + node.value + '\n$$\n</div>';
+        node.value = new_value;
+        (node as { type: string }).type = 'html'; // force cast
+    })
+}
+
 // ![[xxx.png]] -> ![xxx.png](xxx.png)
 export const transform_wiki_image = (ast: Root) => {
     visit(ast, 'paragraph', function (node, index, parent) {
