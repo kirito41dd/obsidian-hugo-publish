@@ -61,7 +61,7 @@ export const delete_files_in_dir_with_keep_list = async (dir: string, keep_list:
 }
 
 // parse md content, return yaml header and left content without header
-export const get_md_yaml_hader_from_content = (content: string): [string, string] => {
+export const get_md_yaml_header_from_content = (content: string): [string, string] => {
     const lines = content.split('\n');
     if (lines.length == 0) {
         return ["", content];
