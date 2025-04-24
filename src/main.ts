@@ -19,8 +19,6 @@ import { gfmTableFromMarkdown, gfmTableToMarkdown } from 'mdast-util-gfm-table'
 
 // Remember to rename these classes and interfaces!
 
-
-
 export default class HugoPublishPlugin extends Plugin {
 	settings: HugoPublishSettings;
 	base_path: string;
@@ -36,19 +34,10 @@ export default class HugoPublishPlugin extends Plugin {
 			return;
 		}
 
-
-
-
 		// This creates an icon in the left ribbon.
 		this.addRibbonIcon('folder-sync', 'hugo sync', async (evt: MouseEvent) => {
 			await this.sync_blog();
 		});
-		// Perform additional things with the ribbon
-		// ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		// const statusBarItemEl = this.addStatusBarItem();
-		// statusBarItemEl.setText('hugo-publish');
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
@@ -59,46 +48,10 @@ export default class HugoPublishPlugin extends Plugin {
 				await this.sync_blog();
 			}
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		// this.addCommand({
-		// 	id: 'sample-editor-command',
-		// 	name: 'Sample editor command',
-		// 	editorCallback: (editor: Editor, view: MarkdownView) => {
-		// 		console.log(editor.getSelection());
-		// 		editor.replaceSelection('Sample Editor Command');
-		// 	}
-		// });
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		// this.addCommand({
-		// 	id: 'open-sample-modal-complex',
-		// 	name: 'Open sample modal (complex)',
-		// 	checkCallback: (checking: boolean) => {
-		// 		// Conditions to check
-		// 		const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-		// 		if (markdownView) {
-		// 			// If checking is true, we're simply "checking" if the command can be run.
-		// 			// If checking is false, then we want to actually perform the operation.
-		// 			if (!checking) {
-		// 				new SampleModal(this.app).open();
-		// 			}
-
-		// 			// This command will only show up in Command Palette when the check function returns true
-		// 			return true;
-		// 		}
-		// 	}
-		// });
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new HugoPublishSettingTab(this.app, this));
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		// this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-		// 	console.log('click', evt);
-		// });
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		// this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
 	onunload() {
@@ -143,28 +96,13 @@ export default class HugoPublishPlugin extends Plugin {
 					hv["title"] = path.parse(f.name).name;
 				}
 				if (stat) {
-					const creat_at = new Date(stat?.ctime).toISOString();
-					const modify_at = new Date(stat?.mtime).toISOString()
-					//console.log("process", f.path, "stat", stat, creat_at);
-					if (!("date" in hv)) {
-						hv["date"] = creat_at;
+					if (!this.settings.export_blog_tag && this.settings.blog_tag.length > 0 && "tags" in hv) {
+						hv["tags"] = hv["tags"].filter((v: string) => v !== this.settings.blog_tag);
 					}
-					if (!("lastmod" in hv)) {
-						hv["lastmod"] = modify_at;
-					}
-				}
-				if (!this.settings.export_blog_tag && this.settings.blog_tag.length > 0 && "tags" in hv) {
-					hv["tags"] = hv["tags"].filter((v: string) => v !== this.settings.blog_tag);
 				}
 			}
 
 			header = stringifyYaml(hv);
-
-
-			//console.log("header\n", header, "body\n", body, "hv", hv);
-
-			// const ast = unified().use(remarkParse).parse(body);
-			// const ast = remark.parse(body)
 
 			const ast = fromMarkdown(body, {
 				extensions: [math(), gfmTable()],
@@ -174,12 +112,10 @@ export default class HugoPublishPlugin extends Plugin {
 			// hard line brek
 			newlineToBreak(ast);
 
-
 			//console.log("ast", ast)
 			util.transform_wiki_image(ast);
 			util.transform_wiki_link(ast);
 			util.transform_better_latex(ast);
-
 
 			const meta = this.app.metadataCache.getFileCache(f);
 
@@ -190,7 +126,13 @@ export default class HugoPublishPlugin extends Plugin {
 			// copy files to blog dir
 			if (abf) {
 				//const src = path.join(this.base_path, abf.path);
-				const dst = path.join(this.settings.get_blog_abs_dir(), f.path);
+				let dst;
+				if(this.settings.page_bundle) {
+					dst = path.join(this.settings.get_blog_abs_dir(), f.basename, path.sep, "index".concat(".",f.extension));
+				} else {
+					dst = path.join(this.settings.get_blog_abs_dir(), f.basename.concat(".",f.extension));
+				} 
+				
 
 				if (meta?.embeds) {
 					// copy embeds to static dir
@@ -199,8 +141,12 @@ export default class HugoPublishPlugin extends Plugin {
 						if (embed_f) {
 							link2path.set(v.link, [embed_f.path, false]);
 							const src = path.join(this.base_path, embed_f.path);
-							const dst = path.join(this.settings.get_static_abs_dir(), embed_f.path);
-							//console.log(`copy ${src} to ${dst}`);
+							let dst;
+							if(this.settings.page_bundle) {
+								dst = path.join(this.settings.get_blog_abs_dir(), f.basename, path.sep, embed_f.basename.concat(".",embed_f.extension));
+							} else {
+								dst = path.join(this.settings.get_static_abs_dir(), embed_f.basename.concat(".",embed_f.extension));
+							}
 							await util.copy_file(src, dst);
 						}
 					}
@@ -219,17 +165,25 @@ export default class HugoPublishPlugin extends Plugin {
 						}
 					}
 				}
-				const static_dir = this.settings.static_dir;
 
-				//console.log("this", this);
-				//console.log("link2path", link2path, "meta", meta)
+				const page_bundle = this.settings.page_bundle;
+				const static_dir = this.settings.static_dir;
+				// unset the language option if any on the codeblock
+				visit(ast, 'code', function (node, index, parent){
+					node.lang=""
+				})
 				visit(ast, 'image', function (node, index, parent) {
 					const decoded_url = decodeURI(node.url);
 					const v = link2path.get(decoded_url)
 					if (v) {
 						// eslint-disable-next-line @typescript-eslint/no-unused-vars
 						const [vv, _is_md] = v;
-						node.url = encodeURI(path.join("/", static_dir, vv).replace(/\\/g, '/'));
+						// remove the attachment folder from the path and write straight to static folder
+						if(page_bundle) {
+							node.url = encodeURI(path.join(vv.split("/")[1]).replace(/\\/g, '/'));
+						} else {
+							node.url = encodeURI(path.join("/", static_dir, vv.split("/")[1]).replace(/\\/g, '/'));
+						}
 					}
 				})
 				visit(ast, 'link', function (node, index, parent) {
@@ -246,9 +200,7 @@ export default class HugoPublishPlugin extends Plugin {
 					}
 				})
 
-				// body = remark.stringify(ast);
 				body = toMarkdown(ast, { extensions: [mathToMarkdown(), gfmTableToMarkdown()] });
-				//console.log(`write ${src} to ${dst}`);
 				await util.write_md(dst, header, body)
 			}
 		}
@@ -280,4 +232,3 @@ class HugoPublishModal extends Modal {
 		contentEl.empty();
 	}
 }
-

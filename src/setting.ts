@@ -9,6 +9,7 @@ export interface HugoPublishSettings {
     exclude_dir: string; // relative path to vault_dir
     site_dir: string; // absolute path
     blog_dir: string; // relative path to site_dir
+    page_bundle: boolean; // export pages as bundles
     static_dir: string; // relative path to site_dir/static
     keep_list: string;
     get_exclude_dir: () => string[];
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: HugoPublishSettings = {
     blog_tag: "blog",
     exclude_dir: "",
     blog_dir: "",
+    page_bundle: false,
     static_dir: "ob",
     site_dir: "",
     keep_list: "",
@@ -63,7 +65,7 @@ export class HugoPublishSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName('blog tag')
+            .setName('Blog tag')
             .setDesc('All articles with this tag are treated as blogs, if empty process all articles')
             .addText(text => text
                 .setPlaceholder('Enter your secret')
@@ -72,32 +74,38 @@ export class HugoPublishSettingTab extends PluginSettingTab {
                     this.plugin.settings.blog_tag = value;
                     await this.plugin.saveSettings();
                 }));
-        new Setting(containerEl).setName("export blog tag").setDesc("Export ${blog tag} to hugo md file's header")
+        new Setting(containerEl).setName("Export blogs with tag").setDesc("Export ${blog tag} to hugo md file's header")
             .addToggle(toggle => toggle.setValue(this.plugin.settings.export_blog_tag).onChange(async (value) => {
                 this.plugin.settings.export_blog_tag = value;
                 await this.plugin.saveSettings();
             }));
-        new Setting(containerEl).setName("exclude dir").setDesc('Exclude dir when syncing, relative path to vault, split by ","')
+        new Setting(containerEl).setName("Exclude dir").setDesc('Exclude dir when syncing, relative path to vault, split by ","')
             .addText(text => text.setPlaceholder("templates,dir2,tmp/dir3").setValue(this.plugin.settings.exclude_dir).onChange(async (value) => {
                 this.plugin.settings.exclude_dir = value;
                 await this.plugin.saveSettings();
             }))
-        new Setting(containerEl).setName("site dir").setDesc("Hugo site root dir, absolute path")
+        new Setting(containerEl).setName("Site dir").setDesc("Hugo site root dir, absolute path")
             .addText(text => text.setPlaceholder("/path/to/hugo/site").setValue(this.plugin.settings.site_dir).onChange(async (value) => {
                 this.plugin.settings.site_dir = value;
                 await this.plugin.saveSettings();
             }));
-        new Setting(containerEl).setName("blog dir").setDesc("All blog copy to this dir, relative path to site, note that content will be deleted first when syncing")
+        new Setting(containerEl).setName("Blog dir").setDesc("All blog copy to this dir, relative path to site, note that content will be deleted first when syncing")
             .addText(text => text.setPlaceholder("blog/dir").setValue(this.plugin.settings.blog_dir).onChange(async (value) => {
                 this.plugin.settings.blog_dir = value;
                 await this.plugin.saveSettings();
             }));
-        new Setting(containerEl).setName("static dir").setDesc("All static(like images) copy to static/${static dir}, like static/ob, relative path to site/static. Can be empty, note that content will be deleted first when syncing")
-            .addText(text => text.setPlaceholder("./").setValue(this.plugin.settings.static_dir).onChange(async (value) => {
+        new Setting(containerEl).setName("Export Page Bundles").setDesc("Export blogs posts a page bundles")
+            .addToggle(toggle => toggle.setValue(this.plugin.settings.page_bundle).onChange(async (value) => {
+                this.plugin.settings.page_bundle = value;
+                await this.plugin.saveSettings();
+                this.display();
+            }));
+        new Setting(containerEl).setName("Static dir").setDesc("All static(like images) copy to static/${static dir}, like static/ob, relative path to site/static. Can be empty, note that content will be deleted first when syncing")
+            .addText(text => text.setPlaceholder("./").setDisabled(this.plugin.settings.page_bundle).setValue(this.plugin.settings.static_dir).onChange(async (value) => {
                 this.plugin.settings.static_dir = value;
                 await this.plugin.saveSettings();
             }));
-        new Setting(containerEl).setName("blog dir keep list").setDesc('Optional, do not delete matching files, use js regexp and split by ",". e.g. .*\\.html,.*\\.toml')
+        new Setting(containerEl).setName("Blog dir keep list").setDesc('Optional, do not delete matching files, use js regexp and split by ",". e.g. .*\\.html,.*\\.toml')
             .addText(text => text.setValue(this.plugin.settings.keep_list).onChange(async (value) => {
                 this.plugin.settings.keep_list = value;
                 await this.plugin.saveSettings();
