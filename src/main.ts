@@ -128,7 +128,11 @@ export default class HugoPublishPlugin extends Plugin {
 				//const src = path.join(this.base_path, abf.path);
 				let dst;
 				if(this.settings.page_bundle) {
-					dst = path.join(this.settings.get_blog_abs_dir(), f.basename, path.sep, "index".concat(".",f.extension));
+					if ("slug" in hv) {
+						dst = path.join(this.settings.get_blog_abs_dir(), hv["slug"], path.sep, "index".concat(".",f.extension));
+					} else {
+						dst = path.join(this.settings.get_blog_abs_dir(), hv["title"], path.sep, "index".concat(".",f.extension));
+					}
 				} else {
 					dst = path.join(this.settings.get_blog_abs_dir(), f.basename.concat(".",f.extension));
 				} 
@@ -143,7 +147,11 @@ export default class HugoPublishPlugin extends Plugin {
 							const src = path.join(this.base_path, embed_f.path);
 							let dst;
 							if(this.settings.page_bundle) {
-								dst = path.join(this.settings.get_blog_abs_dir(), f.basename, path.sep, embed_f.basename.concat(".",embed_f.extension));
+								if ("slug" in hv) {
+									dst = path.join(this.settings.get_blog_abs_dir(), hv["slug"], path.sep, embed_f.basename.concat(".",embed_f.extension));
+								} else {
+									dst = path.join(this.settings.get_blog_abs_dir(), hv["title"], path.sep, embed_f.basename.concat(".",embed_f.extension));
+								}
 							} else {
 								dst = path.join(this.settings.get_static_abs_dir(), embed_f.basename.concat(".",embed_f.extension));
 							}
