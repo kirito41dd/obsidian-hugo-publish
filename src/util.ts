@@ -66,6 +66,10 @@ export const get_md_yaml_header_from_content = (content: string): [string, strin
     if (lines.length == 0) {
         return ["", content];
     }
+    // the first line must be '---' if there is a header
+    if (lines[0].trim() !== '---') {
+        return ["", content];
+    }
 
     let i = 0;
     let st = -1;
