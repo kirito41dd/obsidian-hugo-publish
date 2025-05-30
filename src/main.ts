@@ -185,10 +185,6 @@ export default class HugoPublishPlugin extends Plugin {
 
 				const page_bundle = this.settings.page_bundle;
 				const static_dir = this.settings.static_dir;
-				// unset the language option if any on the codeblock
-				visit(ast, 'code', function (node, index, parent){
-					node.lang=""
-				})
 				visit(ast, 'image', function (node, index, parent) {
 					const decoded_url = decodeURI(node.url);
 					const v = link2path.get(decoded_url)
