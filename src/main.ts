@@ -96,6 +96,15 @@ export default class HugoPublishPlugin extends Plugin {
 					hv["title"] = path.parse(f.name).name;
 				}
 				if (stat) {
+					const creat_at = new Date(stat?.ctime).toISOString();
+					const modify_at = new Date(stat?.mtime).toISOString()
+					//console.log("process", f.path, "stat", stat, creat_at);
+					if (!("date" in hv)) {
+						hv["date"] = creat_at;
+					}
+					if (!("lastmod" in hv)) {
+						hv["lastmod"] = modify_at;
+					}
 					if (!this.settings.export_blog_tag && this.settings.blog_tag.length > 0 && "tags" in hv) {
 						hv["tags"] = hv["tags"].filter((v: string) => v !== this.settings.blog_tag);
 					}
