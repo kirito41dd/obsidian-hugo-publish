@@ -105,9 +105,9 @@ export default class HugoPublishPlugin extends Plugin {
 					if (!("lastmod" in hv)) {
 						hv["lastmod"] = modify_at;
 					}
-					if (!this.settings.export_blog_tag && this.settings.blog_tag.length > 0 && "tags" in hv) {
-						hv["tags"] = hv["tags"].filter((v: string) => v !== this.settings.blog_tag);
-					}
+				}
+				if (!this.settings.export_blog_tag && this.settings.blog_tag.length > 0 && "tags" in hv) {
+					hv["tags"] = hv["tags"].filter((v: string) => v !== this.settings.blog_tag);
 				}
 			}
 
