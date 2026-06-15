@@ -190,16 +190,25 @@ export default class HugoPublishPlugin extends Plugin {
 			// copy files to blog dir
 			if (abf) {
 				//const src = path.join(this.base_path, abf.path);
-				const dst = path.join(this.settings.get_blog_abs_dir(), f.path);
+				const rewrite_rules = this.settings.get_path_rewrite_rules();
+				let rewritten_fpath = f.path;
+				for (const [from, to] of rewrite_rules) {
+					rewritten_fpath = rewritten_fpath.startsWith(from) ? to + rewritten_fpath.substring(from.length) : rewritten_fpath;
+				}
+				const dst = path.join(this.settings.get_blog_abs_dir(), rewritten_fpath);
 
 				if (meta?.embeds) {
 					// copy embeds to static dir
 					for (const v of meta.embeds) {
 						const embed_f = this.app.metadataCache.getFirstLinkpathDest(v.link, f.path);
 						if (embed_f) {
-							link2path.set(v.link, [embed_f.path, false]);
+							let rewritten_epath = embed_f.path;
+							for (const [from, to] of rewrite_rules) {
+								rewritten_epath = rewritten_epath.startsWith(from) ? to + rewritten_epath.substring(from.length) : rewritten_epath;
+							}
+							link2path.set(v.link, [rewritten_epath, false]);
 							const src = path.join(this.base_path, embed_f.path);
-							const dst = path.join(this.settings.get_static_abs_dir(), embed_f.path);
+							const dst = path.join(this.settings.get_static_abs_dir(), rewritten_epath);
 							//console.log(`copy ${src} to ${dst}`);
 							await util.copy_file(src, dst);
 						}
@@ -211,7 +220,11 @@ export default class HugoPublishPlugin extends Plugin {
 						const link_f = this.app.metadataCache.getFirstLinkpathDest(v.link, f.path);
 						if (link_f) {
 							if (link_f.path.endsWith(".md")) {
-								link2path.set(v.link, [v.link, true]);
+								let rewritten_lpath = v.link;
+								for (const [from, to] of rewrite_rules) {
+									rewritten_lpath = rewritten_lpath.startsWith(from) ? to + rewritten_lpath.substring(from.length) : rewritten_lpath;
+								}
+								link2path.set(v.link, [rewritten_lpath, true]);
 							}
 						}
 					}
