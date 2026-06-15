@@ -11,10 +11,12 @@ export interface HugoPublishSettings {
     blog_dir: string; // relative path to site_dir
     static_dir: string; // relative path to site_dir/static
     keep_list: string;
+    path_rewrite_rules: string;
     get_exclude_dir: () => string[];
     get_blog_abs_dir: () => string;
     get_static_abs_dir: () => string;
     get_blog_keep_list: () => RegExp[];
+    get_path_rewrite_rules: () => [string, string][];
 }
 
 export const DEFAULT_SETTINGS: HugoPublishSettings = {
@@ -24,6 +26,7 @@ export const DEFAULT_SETTINGS: HugoPublishSettings = {
     static_dir: "ob",
     site_dir: "",
     keep_list: "",
+    path_rewrite_rules: "",
     get_exclude_dir(): string[] {
         if (this.exclude_dir === "") {
             return [];
@@ -45,6 +48,16 @@ export const DEFAULT_SETTINGS: HugoPublishSettings = {
             }
         }
         return regs;
+    },
+    get_path_rewrite_rules(): [string, string][] {
+        if (this.path_rewrite_rules === "") {
+            return [];
+        }
+        return this.path_rewrite_rules.split(',').map((pair: string) => {
+            const idx = pair.indexOf(':');
+            if (idx === -1) return [pair, ''] as [string, string];
+            return [pair.substring(0, idx), pair.substring(idx + 1)] as [string, string];
+        }).filter(([s]: [string, string]) => s.length > 0);
     },
     export_blog_tag: true
 }
@@ -100,6 +113,11 @@ export class HugoPublishSettingTab extends PluginSettingTab {
         new Setting(containerEl).setName("blog dir keep list").setDesc('Optional, do not delete matching files, use js regexp and split by ",". e.g. .*\\.html,.*\\.toml')
             .addText(text => text.setValue(this.plugin.settings.keep_list).onChange(async (value) => {
                 this.plugin.settings.keep_list = value;
+                await this.plugin.saveSettings();
+            }));
+        new Setting(containerEl).setName("path rewrite rules").setDesc('Rewrite file paths when syncing, format: "source:destination", split by ",". e.g. 已发布文章/: strips the prefix')
+            .addText(text => text.setPlaceholder("prefix1:,prefix2/:newprefix/").setValue(this.plugin.settings.path_rewrite_rules).onChange(async (value) => {
+                this.plugin.settings.path_rewrite_rules = value;
                 await this.plugin.saveSettings();
             }));
     }
