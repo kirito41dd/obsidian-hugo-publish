@@ -114,6 +114,13 @@ export default class HugoPublishPlugin extends Plugin {
 		// Called when the user clicks the icon.
 		new Notice('Start syncing blogs...');
 
+		// Compute the blog path prefix from blog_dir (e.g., "content/posts" -> "posts")
+		const blog_path_prefix = this.settings.blog_dir
+								.split('/')
+			.filter(segment => segment.length > 0)
+			.slice(1)  // Skip the first segment (e.g., "content")
+								.join('/');
+
 		// clear dir
 		await util.delete_files_in_dir_with_keep_list(this.settings.get_blog_abs_dir(), this.settings.get_blog_keep_list());
 		await util.delete_files_in_dir(this.settings.get_static_abs_dir());
@@ -204,14 +211,13 @@ export default class HugoPublishPlugin extends Plugin {
 							await util.copy_file(src, dst);
 						}
 					}
-
 				}
 				if (meta?.links) {
 					for (const v of meta.links) {
 						const link_f = this.app.metadataCache.getFirstLinkpathDest(v.link, f.path);
 						if (link_f) {
 							if (link_f.path.endsWith(".md")) {
-								link2path.set(v.link, [v.link, true]);
+								link2path.set(v.link, [link_f.path, true]);
 							}
 						}
 					}
@@ -236,14 +242,20 @@ export default class HugoPublishPlugin extends Plugin {
 						const [vv, is_md] = v;
 						if (is_md) {
 							// Slugify each path segment to match Hugo's URL format
+							// Also strip the .md extension so the URL is clean (Hugo routes .md to clean URLs)
 							const slugified = vv
+								.replace(/\.md$/, '')  // Remove trailing .md extension
 								.split('/')
 								.map((segment: string) => segment
 									.toLowerCase()
 									.replace(/\s+/g, '-')
 								)
 								.join('/');
-							node.url = encodeURI(path.join("/", slugified).replace(/\\/g, '/'));
+							// Prepend the blog path prefix (e.g., "posts") so the URL matches Hugo's routing
+							const url_path = blog_path_prefix
+								? path.join("/", blog_path_prefix, slugified).replace(/\\/g, '/')
+								: path.join("/", slugified).replace(/\\/g, '/');
+							node.url = encodeURI(url_path);
 						} else {
 							node.url = encodeURI(path.join("/", static_dir, vv).replace(/\\/g, '/'));
 						}

@@ -141,14 +141,15 @@ const transform_wiki_image_on_parent = (node: Parent) => {
         const child = node.children[i];
         if (child.type == "text") {
             const text = child.value.slice(); // clone
-            const regex = /!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+            // Allow optional spaces around the pipe: [[note|text]] or [[note | text]]
+            const regex = /!\[\[([^\]|]+?)(?:\s*\|\s*([^\]]+))?\]\]/g;
             let match;
             let last_index = 0;
             let after_text = text.slice();
             while ((match = regex.exec(text)) != null) {
-                const link_text = match[1];
+                const link_text = match[1].trim();   // remove trailing/leading space from filename
+                const alias = match[2]?.trim();      // remove trailing/leading space from alt text
                 const image_url = link_text;
-
                 const before_text = text.slice(last_index, match.index);
                 after_text = text.slice(match.index + match[0].length);
 
@@ -183,13 +184,14 @@ const transform_wiki_link_on_parent = (node: Parent) => {
         const child = node.children[i];
         if (child.type == "text") {
             const text = child.value.slice(); // clone
-            const regex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+            // Allow optional spaces around the pipe: [[note|text]] or [[note | text]]
+            const regex = /\[\[([^\]|]+?)(?:\s*\|\s*([^\]]+))?\]\]/g;
             let match;
             let last_index = 0;
             let after_text = text.slice();
             while ((match = regex.exec(text)) != null) {
-                const link_text = match[1];
-                const alias = match[2];
+                const link_text = match[1].trim();   // remove trailing/leading space from filename
+                const alias = match[2]?.trim();      // remove trailing/leading space from display text
                 const image_url = link_text;
 
                 const before_text = text.slice(last_index, match.index);
