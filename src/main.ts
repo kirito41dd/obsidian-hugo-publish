@@ -236,7 +236,9 @@ export default class HugoPublishPlugin extends Plugin {
 						const [vv, is_md] = v;
 						if (is_md) {
 							// Slugify each path segment to match Hugo's URL format
+							// Also strip the .md extension so the URL is clean (Hugo routes .md to clean URLs)
 							const slugified = vv
+								.replace(/\.md$/, '')  // Remove trailing .md extension
 								.split('/')
 								.map((segment: string) => segment
 									.toLowerCase()
